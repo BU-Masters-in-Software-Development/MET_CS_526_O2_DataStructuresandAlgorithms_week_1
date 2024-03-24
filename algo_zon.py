@@ -19,13 +19,13 @@
 
  The code for a node class and InvalidRouteError class is provided below.
 
-Code Author: <Your Name Here>
+Code Author: Adrian Everardo Ortiz
 
 """
 
 
 class PickupSnapshotNode:
-    def __init__(self, location_id: int, timestamp: int, next_node: 'PickupSnapshotNode'):
+    def __init__(self, location_id: int, timestamp: int, next_node: 'PickupSnapshotNode' = None):
         self.id = location_id
         self.timestamp = timestamp
         self.next = next_node
@@ -49,7 +49,37 @@ class InvalidRouteError(Exception):
 
 
 def detect_cyclic_route(start: PickupSnapshotNode):
-    pass
+    if not start:
+        return None
+
+    visited_nodes = {}
+    current_node = start
+    last_timestamp = current_node.get_timestamp()
+
+    while current_node:
+        node_id = current_node.get_id()
+        timestamp = current_node.get_timestamp()
+
+        if timestamp < last_timestamp:
+            raise InvalidRouteError()
+
+        if node_id in visited_nodes:
+            # Start of the cycle detected
+            cycle_time = timestamp - visited_nodes[node_id]
+            # To check for timestamp order within the cycle
+            cycle_node = current_node.get_next()
+            while cycle_node and cycle_node != current_node:
+                if cycle_node.get_timestamp() <= last_timestamp:
+                    raise InvalidRouteError()
+                last_timestamp = cycle_node.get_timestamp()
+                cycle_node = cycle_node.get_next()
+            return cycle_time
+
+        visited_nodes[node_id] = timestamp
+        last_timestamp = timestamp
+        current_node = current_node.get_next()
+
+    return None
 
 
 class TestingBase:
